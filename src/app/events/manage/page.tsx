@@ -12,10 +12,15 @@ import {
   PlusCircle,
   ExternalLink,
   X,
-  Save
+  Save,
+  Type,
+  Tag,
+  Calendar,
+  MapPin,
+  Image as ImageIcon,
+  AlignLeft
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Swal from 'sweetalert2';
 
 interface EventItem {
   _id: string;
@@ -152,44 +157,55 @@ function ManageEventsContent() {
     }
   };
 
-  const handleDelete = (id: string, title: string) => {
-    Swal.fire({
-      title: 'Delete this initiative?',
-      text: `Are you sure you want to remove "${title}"? This action cannot be undone.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#e11d48',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'Yes, Delete Event',
-      cancelButtonText: 'Cancel',
-      customClass: {
-        popup: 'rounded-2xl border border-theme bg-card text-foreground',
-      },
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const res = await fetch(`${API_BASE_URL}/events/${id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const data = await res.json();
-          if (data.success) {
-            Swal.fire({
-              icon: 'success',
-              title: 'Deleted!',
-              text: 'The event has been successfully removed.',
-              timer: 1800,
-              showConfirmButton: false,
-            });
-            loadMyEvents();
-          } else {
-            toast.error(data.message || 'Failed to delete event.');
-          }
-        } catch {
-          toast.error('Delete request failed.');
-        }
+  const executeDelete = async (id: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/events/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Event deleted successfully.');
+        loadMyEvents();
+      } else {
+        toast.error(data.message || 'Failed to delete event.');
       }
-    });
+    } catch {
+      toast.error('Delete request failed.');
+    }
+  };
+
+  const handleDelete = (id: string, title: string) => {
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-2 p-1">
+          <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+            Delete &quot;{title}&quot;?
+          </p>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            This action cannot be undone.
+          </p>
+          <div className="flex items-center justify-end gap-2 mt-1">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-2.5 py-1 text-xs font-medium rounded-[6px] border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                executeDelete(id);
+              }}
+              className="px-2.5 py-1 text-xs font-bold rounded-[6px] bg-rose-600 hover:bg-rose-700 text-white transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 6000 }
+    );
   };
 
   return (
@@ -321,124 +337,164 @@ function ManageEventsContent() {
 
       
       {editingEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-2xl rounded-3xl border border-theme bg-card p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl rounded-3xl border border-[#E2E8F0] dark:border-[#1E293B] bg-white dark:bg-[#152238] p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto space-y-6">
             
-            <div className="flex items-center justify-between border-b border-theme pb-4">
-              <h2 className="font-heading text-xl font-bold text-slate-900 dark:text-white">
-                Update Event Information
-              </h2>
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 flex items-center justify-center text-[#2563EB] dark:text-[#60A5FA]">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="font-heading text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                    Update Event Information
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Modify the logistics and details for this social drive.
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={closeEditModal}
-                className="p-1 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground cursor-pointer"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
+                aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleUpdate} className="space-y-4">
+            <form onSubmit={handleUpdate} className="space-y-5">
               
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  Title
+              {/* Event Title */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#1E40AF] dark:text-[#60A5FA]">
+                  Event Title
                 </label>
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  required
-                  className="w-full px-4 py-2.5 rounded-xl border border-theme bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#D8A85B]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Category
-                  </label>
-                  <select
-                    value={editType}
-                    onChange={(e) => setEditType(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-theme bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#D8A85B]"
-                  >
-                    {EVENT_TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Event Date (Future Only)
-                  </label>
-                  <input
-                    type="date"
-                    value={editDate}
-                    onChange={(e) => setEditDate(e.target.value)}
-                    required
-                    className="w-full px-4 py-2.5 rounded-xl border border-theme bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#D8A85B]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Location
-                  </label>
+                <div className="relative">
+                  <Type className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
-                    value={editLoc}
-                    onChange={(e) => setEditLoc(e.target.value)}
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-theme bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#D8A85B]"
+                    placeholder="e.g., Winter Clothes Distribution – Mirpur 10, Dhaka"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#E2E8F0] dark:border-[#1E293B] bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] transition-all"
                   />
                 </div>
+              </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Thumbnail URL
+              {/* Category & Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#1E40AF] dark:text-[#60A5FA]">
+                    Event Category
                   </label>
-                  <input
-                    type="url"
-                    value={editThumb}
-                    onChange={(e) => setEditThumb(e.target.value)}
+                  <div className="relative">
+                    <Tag className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
+                    <select
+                      value={editType}
+                      onChange={(e) => setEditType(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#E2E8F0] dark:border-[#1E293B] bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] transition-all cursor-pointer"
+                    >
+                      {EVENT_TYPES.map((t) => (
+                        <option key={t} value={t} className="bg-white dark:bg-[#152238] text-slate-900 dark:text-white">
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#1E40AF] dark:text-[#60A5FA]">
+                    Event Date <span className="font-normal lowercase text-slate-400">(Future Only)</span>
+                  </label>
+                  <div className="relative">
+                    <Calendar className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
+                    <input
+                      type="date"
+                      min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#E2E8F0] dark:border-[#1E293B] bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Location & Thumbnail */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#1E40AF] dark:text-[#60A5FA]">
+                    Assembly Location
+                  </label>
+                  <div className="relative">
+                    <MapPin className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={editLoc}
+                      onChange={(e) => setEditLoc(e.target.value)}
+                      required
+                      placeholder="e.g., Mohammadpur Town Hall Ground, Dhaka"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#E2E8F0] dark:border-[#1E293B] bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#1E40AF] dark:text-[#60A5FA]">
+                    Thumbnail Image URL
+                  </label>
+                  <div className="relative">
+                    <ImageIcon className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
+                    <input
+                      type="url"
+                      value={editThumb}
+                      onChange={(e) => setEditThumb(e.target.value)}
+                      required
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#E2E8F0] dark:border-[#1E293B] bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#1E40AF] dark:text-[#60A5FA]">
+                  Event Description & Volunteer Brief
+                </label>
+                <div className="relative">
+                  <AlignLeft className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
+                  <textarea
+                    rows={3}
+                    value={editDesc}
+                    onChange={(e) => setEditDesc(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-theme bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#D8A85B]"
+                    placeholder="Describe the mission, items needed, target beneficiaries, and volunteer requirements..."
+                    className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#E2E8F0] dark:border-[#1E293B] bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] transition-all"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  Description
-                </label>
-                <textarea
-                  rows={3}
-                  value={editDesc}
-                  onChange={(e) => setEditDesc(e.target.value)}
-                  required
-                  className="w-full px-4 py-2.5 rounded-xl border border-theme bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#D8A85B]"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-theme">
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={closeEditModal}
-                  className="px-5 py-2.5 rounded-xl border border-theme text-foreground hover:bg-black/5 dark:hover:bg-white/5 text-sm font-semibold cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingEdit}
-                  className="px-6 py-2.5 rounded-2xl font-heading text-sm font-bold bg-[#1E40AF] text-white hover:bg-[#1D4ED8] dark:bg-[#2563EB] dark:hover:bg-[#3B82F6] transition-colors shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl font-heading text-xs font-bold bg-[#1E40AF] hover:bg-[#1D4ED8] dark:bg-[#2563EB] dark:hover:bg-[#3B82F6] text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
-                  <span>{savingEdit ? 'Saving...' : 'Save Updates'}</span>
+                  <span>{savingEdit ? 'Saving Updates...' : 'Save Updates'}</span>
                 </button>
               </div>
 

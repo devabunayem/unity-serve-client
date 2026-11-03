@@ -18,7 +18,6 @@ import {
   AlertCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Swal from 'sweetalert2';
 
 interface EventDetail {
   _id: string;
@@ -127,24 +126,7 @@ function EventDetailsContent() {
             participantsCount: (event.participantsCount || 0) + 1,
           });
         }
-        Swal.fire({
-          icon: 'success',
-          title: 'You are Registered!',
-          text: 'Thank you for stepping up to serve the community. See you on the ground!',
-          confirmButtonText: 'View My Joined Drives',
-          confirmButtonColor: '#2563EB',
-          showCancelButton: true,
-          cancelButtonText: 'Stay on Page',
-          customClass: {
-            popup: 'rounded-[14px] border border-theme bg-card text-foreground',
-            confirmButton: 'rounded-[10px] font-bold px-5 py-2.5',
-            cancelButton: 'rounded-[10px] px-5 py-2.5',
-          },
-        }).then((result) => {
-          if (result.isConfirmed) {
-            router.push('/events/joined');
-          }
-        });
+        toast.success('Successfully registered for this initiative!');
       } else {
         toast.error(data.message || 'Failed to join event.');
       }

@@ -7,7 +7,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Heart
 } from 'lucide-react';
 
 function XIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -246,7 +245,7 @@ export function Footer() {
         <div className="border-t border-[#E2E8F0] dark:border-[#1E293B] mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
           <p>© 2026 UnityServe Platform. All rights reserved.</p>
           <p className="flex items-center gap-1.5 font-medium">
-            Dedicated to community welfare <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> in Bangladesh.
+            Design and Developed by <a href="https://abunayem.com" target="_blank" rel="noopener noreferrer" className="text-[#1E40AF] dark:text-[#60A5FA] font-semibold hover:underline">ABU NAYEM</a>
           </p>
         </div>
       </div>
